@@ -1,0 +1,58 @@
+const int controlPin1=2;
+const int controlPin2=3;
+const int enablePin=9;
+const int directionSwitchPin=4;
+const int onOffSwitchStateSwitchPin=5;
+const int potPin=A0;
+int onOffSwitchState=0;
+int previousOnOffSwitchState=0;
+int directionSwitchState=0;
+int previousDirectionSwitchState=0;
+int motorEnabled=0;
+int motorSpeed=0;
+int motorDirection=1;
+long duration;
+long distance;
+void setup(){
+  Serial.begin(9600);
+  pinMode(6,OUTPUT);
+  pinMode(7,INPUT);
+  pinMode(directionSwitchPin,INPUT);
+  pinMode(onOffSwitchStateSwitchPin,INPUT);
+  pinMode(controlPin1,OUTPUT);
+  pinMode(controlPin2,OUTPUT);
+  pinMode(enablePin,OUTPUT);
+  digitalWrite(enablePin,LOW);
+  pinMode(13,OUTPUT);
+  digitalWrite(13,HIGH);
+}
+void loop(){  
+  digitalWrite(6,LOW);
+  delay(2);
+  digitalWrite(6,HIGH);
+  delay(5);
+  digitalWrite(6,LOW);
+  duration=pulseIn(7,HIGH);
+  distance=duration/29/2;
+  Serial.print(distance);
+  delay(50);
+  onOffSwitchState=digitalRead(onOffSwitchStateSwitchPin);//read state of pin 5, for on/off
+  delay(1);
+  motorSpeed=analogRead(potPin)/4;//read state of A0, potentiometer
+  if(onOffSwitchState==HIGH&&(distance>60||distance==0)){//if switch is on and it doesn't sense anything within 100 cm
+    motorEnabled=1; //allow motor to run
+  }
+  else{
+    motorEnabled=0; //don't allow motor to run
+    }
+  if(motorDirection==1){
+    digitalWrite(controlPin1,HIGH);
+    digitalWrite(controlPin2,LOW);
+  }
+  if(motorEnabled==1){
+    analogWrite(enablePin,motorSpeed);//run motor at speed from potentiometer
+  }
+  else{
+    analogWrite(enablePin,0);
+  }
+}
