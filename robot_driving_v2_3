@@ -1,0 +1,136 @@
+const int controlPin1=2;
+const int controlPin2=3;
+const int enablePin=9;
+const int onOffSwitchStateSwitchPin=5;
+const int potPin=A0;
+int onOffSwitchState=0;
+int previousOnOffSwitchState=0;
+int directionSwitchState=0;
+int previousDirectionSwitchState=0;
+int motorEnabled=0;
+int motorSpeed=0;
+int motorDirection=1;
+long leftdistancetime=0;
+long rightdistancetime=0;
+long durationforward;
+long distanceforward;
+long durationright;
+long distanceright;
+long distanceleft;
+long durationleft;
+long starttime=0;
+long stoptime=0;
+long interval=0;
+void setup(){
+  Serial.begin(9600);
+  pinMode(A5,OUTPUT);
+  pinMode(A4,OUTPUT);
+  pinMode(10,OUTPUT);
+  pinMode(12,OUTPUT);
+  pinMode(11,INPUT);
+  pinMode(8,INPUT);
+  pinMode(6,OUTPUT);
+  pinMode(7,INPUT);
+  pinMode(onOffSwitchStateSwitchPin,INPUT);
+  pinMode(controlPin1,OUTPUT);
+  pinMode(controlPin2,OUTPUT);
+  pinMode(enablePin,OUTPUT);
+  digitalWrite(enablePin,LOW);
+  pinMode(13,OUTPUT);
+  digitalWrite(13,HIGH);
+  digitalWrite(6,LOW);
+  digitalWrite(10,LOW);
+  digitalWrite(12,LOW);
+}
+void loop(){  
+  starttime=millis();
+  //FORWARD SENSOR
+  digitalWrite(6,HIGH);
+  delay(5);
+  digitalWrite(6,LOW);
+  durationforward=pulseIn(7,HIGH,16000);
+  distanceforward=durationforward/29/2;
+  //RIGHT SENSOR
+  digitalWrite(10,HIGH);
+  delay(5);
+  digitalWrite(10,LOW);
+  durationright=pulseIn(11,HIGH,16000);
+  distanceright=durationright/29/2;
+  //LEFT SENSOR
+  digitalWrite(12,HIGH);
+  delay(5);
+  digitalWrite(12,LOW);
+  durationleft=pulseIn(8,HIGH,16000);
+  distanceleft=durationleft/29/2;
+  //
+  //PRINT ALL SENSOR VALUES
+  //
+  Serial.print(distanceforward);
+  Serial.print(" cm Forward ");
+  Serial.print(distanceright);
+  Serial.print(" cm Right ");
+  Serial.print(distanceleft);
+  Serial.print(" cm Left");
+  //ON & OFF SWITCH READING
+  onOffSwitchState=digitalRead(onOffSwitchStateSwitchPin);//READ STATE OF PIN 5
+  delay(1);
+  //
+  //VARIABLE SPEED
+  //
+  motorSpeed=analogRead(potPin)/4;//READ STATE OF POT
+  //
+  //DRIVING FUNCTIONS
+  //
+  if(onOffSwitchState==HIGH&&(distanceforward>60||distanceforward==0)){//IF SWITCH IS ON AND NOTHING WITHIN "X" CM FROM FRONT SENSOR
+    motorEnabled=1; //RUN MOTOR
+  }
+  else{
+    motorEnabled=0; //DON'T RUN MOTOR
+  }
+  if(motorEnabled==1){
+    analogWrite(enablePin,motorSpeed);//RUN MOTOR AT POT SPEED
+  }
+  else{
+    analogWrite(enablePin,0);
+  }  
+  //
+  //STEERING FOLLOWS
+  //
+  if(onOffSwitchState==HIGH&&(distanceforward>60||distanceforward==0)&&(distanceleft>60||distanceleft==0)){
+    leftdistancetime++;
+  }  
+  else{
+  leftdistancetime=0;
+  }
+  if(onOffSwitchState==HIGH&&(distanceforward>60||distanceforward==0)&&(distanceright>60||distanceright==0)){
+    rightdistancetime++;
+  }  
+  else{
+  rightdistancetime=0;
+  }
+  if(leftdistancetime>20){//takes 50 milliseconds for one program cycle with one sensor at an unsolvable distance
+  digitalWrite(A5,HIGH); //FAKE STEER LEFT
+  }
+  else{
+    digitalWrite(A5,LOW);
+  }
+  if(rightdistancetime>20){//takes 50 milliseconds for one program cycle with one sensor at an unsolvable distance
+  digitalWrite(A4,HIGH);//FAKE STEER RIGHT
+  }
+  else{
+    digitalWrite(A4,LOW);
+  }
+  //
+  //END STEERING
+  //
+  //FORWARD AND REVERSE FUNCTIONS
+  if(motorDirection==1){
+    digitalWrite(controlPin1,HIGH);
+    digitalWrite(controlPin2,LOW);
+  };
+  //ONE CYCLE LENGTH
+  stoptime=millis();
+  interval=stoptime-starttime;
+  Serial.print(" interval: ");
+  Serial.println(interval);
+ }
