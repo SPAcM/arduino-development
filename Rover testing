@@ -1,0 +1,33 @@
+const int motordirection1pin=7;
+const int motordirection2pin=8;
+const int motorenable1pin=5;
+const int motorenable2pin=6;
+int motorsdirection=0;
+void setup(){
+  pinMode(motordirection1pin,OUTPUT);
+  pinMode(motordirection2pin,OUTPUT);
+  pinMode(motorenable2pin,OUTPUT);
+  pinMode(motorenable1pin,OUTPUT);
+  pinMode(9,INPUT);
+  pinMode(10,INPUT);
+  digitalWrite(motordirection1pin,LOW);
+  digitalWrite(motordirection2pin,LOW);
+}
+void loop(){
+  if(digitalRead(9)==HIGH){
+    digitalWrite(motordirection1pin,HIGH);
+    digitalWrite(motordirection2pin,HIGH);
+  }
+  else{
+    digitalWrite(motordirection1pin,LOW);
+    digitalWrite(motordirection2pin,LOW);
+  }
+  if(digitalRead(10)==HIGH){
+    digitalWrite(motorenable1pin,HIGH);
+    digitalWrite(motorenable2pin,HIGH);
+  }
+  else{
+    digitalWrite(motorenable1pin,LOW);
+    digitalWrite(motorenable2pin,LOW);
+  }
+}
