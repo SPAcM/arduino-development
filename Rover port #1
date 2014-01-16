@@ -1,0 +1,157 @@
+int time_waiting=0;
+long previous_millis=0;
+long stop_millis=0;
+long start_millis=0;
+long interval=1000; // this value is how long we want the program to wait while there is something in front of it
+int distance_forward=0;
+int distance_left=0;
+int distance_right=0;
+int wall_diagonal_left=100; //this value is how far away the wall should be to the left
+int turning_interval=1000; // this value is how long we want the side sensors to sense a large value before turning
+int turning_millis=0;
+int turning_millis2=0;
+int first_turn_counter=0;
+int straight_counter=0;
+int motor_turn_pwm=512; // this value will change how sharp of a corner the rover makes
+
+
+void setup(){
+  pinMode(5,OUTPUT);
+  pinMode(6,OUTPUT);
+  pinMode(7,OUTPUT);
+  pinMode(8,OUTPUT);
+  pinMode(9,OUTPUT);
+  pinMode(10,OUTPUT);
+  pinMode(A0,INPUT);
+  pinMode(A1,INPUT);
+  digitalWrite(5,LOW);
+  digitalWrite(6,LOW);
+  digitalWrite(7,LOW);
+  digitalWrite(8,LOW);
+  digitalWrite(9,LOW);
+  digitalWrite(10,LOW);
+}
+
+int sense(int sensor_number){
+  int result=0;
+  if(sensor_number==1){ // FRONT SENSOR
+    digitalWrite(9,HIGH);
+    delayMicroseconds(20);
+    digitalWrite(9,LOW);
+    result=analogRead(A0);
+    return result;
+  }
+  if(sensor_number==2){ // LEFT SENSOR
+    digitalWrite(10,HIGH);
+    delayMicroseconds(20);
+    digitalWrite(10,LOW);
+    result=analogRead(A1);
+    return result;
+  }
+  if(sensor_number==3){
+    // for future addition of an additional right sensor
+  }
+}
+void back_up(){
+  // RUN MOTORS BACKWARDS
+  // FIRST LOOK AT SENSOR DATA AND DECIDE HOW TO BACK UP
+  distance_forward=sense(1);
+  distance_left=sense(2);
+  //distance_right=sense(3);
+  if(abs(distance_left-150)>30){
+    if(distance_left>150){
+      digitalWrite(7,LOW);
+      digitalWrite(8,LOW);
+      analogWrite(6,motor_turn_pwm);
+      digitalWrite(5,HIGH);
+    }
+    else if(distance_left<150){
+      digitalWrite(7,LOW);
+      digitalWrite(8,LOW);
+      digitalWrite(6,HIGH);
+      analogWrite(5,motor_turn_pwm);
+    }
+  }
+  else {
+    digitalWrite(7,LOW);
+    digitalWrite(5,HIGH);
+    digitalWrite(8,LOW);
+    digitalWrite(6,HIGH);
+  }
+}
+void go_forward(){
+  // RUN MOTORS
+  digitalWrite(7,HIGH);
+  digitalWrite(5,HIGH);
+  digitalWrite(8,HIGH);
+  digitalWrite(6,HIGH);
+}
+void dont_move(){
+  // DON'T RUN MOTORS
+  digitalWrite(5,LOW);
+  digitalWrite(6,LOW);
+}
+void turn_left(){
+  
+  // WILL HAVE TO CHECK TO SEE WHICH MOTOR IS THE LEFT ONE
+  
+  // PWM RUN THE LEFT MOTOR
+  digitalWrite(7,HIGH);
+  digitalWrite(8,HIGH);
+  analogWrite(5,motor_turn_pwm);
+  digitalWrite(6,HIGH);
+}
+/*
+void turn_right(){
+  
+  // WILL HAVE TO CHECK TO SEE WHICH MOTOR IS THE RIGHT ONE
+  
+  // PWM RUN THE RIGHT MOTOR
+  digitalWrite(7,HIGH);
+  digitalWrite(8,HIGH);
+  analogWrite(6,motor_turn_pwm);
+  digitalWrite(5,HIGH);
+}
+*/
+
+
+
+
+// LOOP FOLLOWS
+
+
+
+
+
+void loop(){
+  distance_forward=sense(1);
+  distance_left=sense(2);
+  //distance_right=sense(3);
+  while(sense(1)<=150){ //150 here is the distance in cm we want to allow for the thing to stop before
+    dont_move;
+    if(straight_counter=0){
+      start_millis=millis();
+      straight_counter=1;
+    }
+    stop_millis=millis();
+    if(stop_millis-start_millis>interval){
+      start_millis=millis();
+      back_up;
+    }
+  }
+  straight_counter=0;
+  go_forward;
+  while(sense(2)>wall_diagonal_left){
+    if(first_turn_counter==0){
+      first_turn_counter=1;
+      turning_millis=millis();
+    }
+    turning_millis2=millis();
+    if(turning_millis2-turning_millis>turning_interval){
+      turning_millis=turning_millis2;
+      turn_left;
+    }
+  }
+  first_turn_counter=0;
+  go_forward;
+}
